@@ -9,7 +9,7 @@ import { SupabaseService } from '../../core/supabase';
 export class ComponentesPage {
   private readonly supabase = inject(SupabaseService);
 
-  protected readonly titulo = 'Componentes';
+  readonly titulo = 'Componentes';
   protected readonly descricao = 'Button, Input, Badge, Modal, Toast, DatePicker, Tabs, Skeleton, Table, Progress.';
   protected readonly slugProjeto = 'cadence';
 
