@@ -16,10 +16,10 @@ interface ItemNav {
 export class App {
   private readonly supabase = inject(SupabaseService);
 
-  protected readonly titulo = 'Cadence';
+  readonly titulo = 'Cadence';
   protected readonly tagline = 'Design system acessível — tokens, componentes e playground';
   protected readonly semana = 6;
-  protected readonly nav: ItemNav[] = [
+  readonly nav: ItemNav[] = [
     { path: '/playground', rotulo: 'Playground' },
     { path: '/componentes', rotulo: 'Componentes' },
   ];

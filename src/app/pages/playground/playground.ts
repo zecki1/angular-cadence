@@ -9,7 +9,7 @@ import { SupabaseService } from '../../core/supabase';
 export class PlaygroundPage {
   private readonly supabase = inject(SupabaseService);
 
-  protected readonly titulo = 'Playground';
+  readonly titulo = 'Playground';
   protected readonly descricao = 'Switch de tamanho, estado, icone e theme.';
   protected readonly slugProjeto = 'cadence';
 
