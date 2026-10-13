@@ -56,10 +56,10 @@
           "builder": "@angular/build:dev-server",
           "configurations": {
             "production": {
-              "buildTarget": "cadence:build:production"
+              "buildTarget": "angular-cadence:build:production"
             },
             "development": {
-              "buildTarget": "cadence:build:development"
+              "buildTarget": "angular-cadence:build:development"
             }
           },
           "defaultConfiguration": "development"

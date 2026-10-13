@@ -66,7 +66,7 @@ code {
 
 .acao {
   align-self: flex-start;
-  background: var(--acento);
+  background: var(--acento-forte);
   color: var(--acento-contraste);
   border: 0;
   border-radius: 0.5rem;
@@ -86,7 +86,7 @@ code {
 }
 
 .status--ok {
-  color: var(--acento);
+  color: #a5b4fc;
 }
 
 .status--erro {
