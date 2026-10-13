@@ -2,7 +2,7 @@
   position: absolute;
   left: -9999px;
   top: 0;
-  background: var(--acento);
+  background: var(--acento-forte);
   color: var(--acento-contraste);
   padding: 0.6rem 1rem;
   border-radius: 0 0 0.5rem 0;
