@@ -51,7 +51,11 @@ export class JogoPage {
   readonly velhaTabuleiro = signal<(null | 'X' | 'O')[]>(Array(9).fill(null));
   readonly velhaVez = signal<'X' | 'O'>('X');
   readonly velhaVencedor = signal<null | 'X' | 'O' | 'empate'>(null);
+  readonly velhaLinha = signal<number[] | null>(null);
   readonly velhaPlacar = signal<{ X: number; O: number; empate: number }>({ X: 0, O: 0, empate: 0 });
+  readonly velhaModo = signal<'cpu' | 'dois'>('cpu');
+  readonly velhaPensando = signal(false);
+  private velhaTimer: ReturnType<typeof setTimeout> | null = null;
 
   // ---- Dama ----
   readonly damaTabuleiro = signal<(PecaDama | null)[][]>(this.montarDama());
@@ -198,40 +202,118 @@ export class JogoPage {
 
   // ---------- Jogo da Velha ----------
   jogarVelha(i: number): void {
-    if (this.velhaTabuleiro()[i] || this.velhaVencedor()) return;
-    const t = [...this.velhaTabuleiro()];
-    t[i] = this.velhaVez();
-    this.velhaTabuleiro.set(t);
-    const v = this.calcularVencedorVelha(t);
-    if (v) {
-      this.velhaVencedor.set(v);
-      const pl = { ...this.velhaPlacar() };
-      if (v === 'empate') pl.empate++;
-      else pl[v]++;
-      this.velhaPlacar.set(pl);
-      if (v !== 'empate') this.scores.salvar('velha', 100);
-    } else {
-      this.velhaVez.set(this.velhaVez() === 'X' ? 'O' : 'X');
+    if (this.velhaTabuleiro()[i] || this.velhaVencedor() || this.velhaPensando()) return;
+    if (this.velhaModo() === 'cpu' && this.velhaVez() === 'O') return;
+    this.aplicarJogadaVelha(i, this.velhaVez());
+    if (this.velhaModo() === 'cpu' && !this.velhaVencedor() && this.velhaVez() === 'O') {
+      this.velhaPensando.set(true);
+      this.velhaTimer = setTimeout(() => {
+        this.velhaPensando.set(false);
+        const melhor = this.melhorJogadaVelha([...this.velhaTabuleiro()], 'O');
+        if (melhor >= 0) this.aplicarJogadaVelha(melhor, 'O');
+      }, 420);
     }
   }
 
-  calcularVencedorVelha(t: (null | 'X' | 'O')[]): null | 'X' | 'O' | 'empate' {
+  private aplicarJogadaVelha(i: number, quem: 'X' | 'O'): void {
+    const t = [...this.velhaTabuleiro()];
+    t[i] = quem;
+    this.velhaTabuleiro.set(t);
+    const linha = this.linhaVencedora(t);
+    if (linha) {
+      this.velhaLinha.set(linha);
+      this.velhaVencedor.set(quem);
+      this.velhaPlacar.update((pl) => ({ ...pl, [quem]: pl[quem] + 1 }));
+      this.scores.salvar('velha', 100);
+      return;
+    }
+    if (t.every((x) => x)) {
+      this.velhaVencedor.set('empate');
+      this.velhaPlacar.update((pl) => ({ ...pl, empate: pl.empate + 1 }));
+      return;
+    }
+    this.velhaVez.set(quem === 'X' ? 'O' : 'X');
+  }
+
+  private linhaVencedora(t: (null | 'X' | 'O')[]): number[] | null {
     const linhas = [
       [0, 1, 2], [3, 4, 5], [6, 7, 8],
       [0, 3, 6], [1, 4, 7], [2, 5, 8],
       [0, 4, 8], [2, 4, 6],
     ];
     for (const [a, b, c] of linhas) {
-      if (t[a] && t[a] === t[b] && t[a] === t[c]) return t[a];
+      if (t[a] && t[a] === t[b] && t[a] === t[c]) return [a, b, c];
     }
+    return null;
+  }
+
+  calcularVencedorVelha(t: (null | 'X' | 'O')[]): null | 'X' | 'O' | 'empate' {
+    const linha = this.linhaVencedora(t);
+    if (linha) return t[linha[0]] as 'X' | 'O';
     if (t.every((x) => x)) return 'empate';
     return null;
   }
 
+  private melhorJogadaVelha(t: (null | 'X' | 'O')[], quem: 'X' | 'O'): number {
+    let melhor = -Infinity;
+    let candidatos: number[] = [];
+    for (let i = 0; i < 9; i++) {
+      if (t[i]) continue;
+      t[i] = quem;
+      const pontos = this.minimaxVelha(t, quem === 'O' ? 'X' : 'O', 0);
+      t[i] = null;
+      if (pontos > melhor) {
+        melhor = pontos;
+        candidatos = [i];
+      } else if (pontos === melhor) {
+        candidatos.push(i);
+      }
+    }
+    return candidatos[Math.floor(Math.random() * candidatos.length)] ?? -1;
+  }
+
+  private minimaxVelha(t: (null | 'X' | 'O')[], vez: 'X' | 'O', profundidade: number): number {
+    const linha = this.linhaVencedora(t);
+    if (linha) {
+      return t[linha[0]] === 'O' ? 10 - profundidade : profundidade - 10;
+    }
+    if (t.every((x) => x)) return 0;
+    if (vez === 'O') {
+      let melhor = -Infinity;
+      for (let i = 0; i < 9; i++) {
+        if (t[i]) continue;
+        t[i] = 'O';
+        melhor = Math.max(melhor, this.minimaxVelha(t, 'X', profundidade + 1));
+        t[i] = null;
+      }
+      return melhor;
+    }
+    let melhor = Infinity;
+    for (let i = 0; i < 9; i++) {
+      if (t[i]) continue;
+      t[i] = 'X';
+      melhor = Math.min(melhor, this.minimaxVelha(t, 'O', profundidade + 1));
+      t[i] = null;
+    }
+    return melhor;
+  }
+
+  definirModoVelha(modo: 'cpu' | 'dois'): void {
+    if (this.velhaModo() === modo) return;
+    this.velhaModo.set(modo);
+    this.reiniciarVelha();
+  }
+
   reiniciarVelha(): void {
+    if (this.velhaTimer) {
+      clearTimeout(this.velhaTimer);
+      this.velhaTimer = null;
+    }
+    this.velhaPensando.set(false);
     this.velhaTabuleiro.set(Array(9).fill(null));
     this.velhaVez.set('X');
     this.velhaVencedor.set(null);
+    this.velhaLinha.set(null);
   }
 
   // ---------- Dama ----------
@@ -407,6 +489,7 @@ export class JogoPage {
   private limparTimers(): void {
     if (this.timerMemoria) { clearInterval(this.timerMemoria); this.timerMemoria = null; }
     if (this.timerReacao) { clearTimeout(this.timerReacao); this.timerReacao = null; }
+    if (this.velhaTimer) { clearTimeout(this.velhaTimer); this.velhaTimer = null; }
     if (this.pegarInterval) { clearInterval(this.pegarInterval); this.pegarInterval = null; }
     if (this.pegarSpawn) { clearInterval(this.pegarSpawn); this.pegarSpawn = null; }
     if (this.pegarTick) { clearInterval(this.pegarTick); this.pegarTick = null; }

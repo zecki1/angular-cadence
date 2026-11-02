@@ -67,26 +67,74 @@
     }
     @case ('velha') {
       <div class="velha">
-        <div class="velha-info">
-          <span>Vez: {{ velhaVez() }}</span>
-          <span>Placar X: {{ velhaPlacar().X }} · O: {{ velhaPlacar().O }} · E: {{ velhaPlacar().empate }}</span>
+        <div class="velha-modos" role="group" aria-label="Modo de jogo">
+          <button type="button" [class.ativo]="velhaModo() === 'cpu'" (click)="definirModoVelha('cpu')">
+            🤖 vs CPU
+          </button>
+          <button type="button" [class.ativo]="velhaModo() === 'dois'" (click)="definirModoVelha('dois')">
+            👥 2 jogadores
+          </button>
         </div>
-        @if (velhaVencedor()) {
-          <div class="velha-fim" role="status">
-            <h2>
-              @if (velhaVencedor() === 'empate') { Empate! }
-              @else { Vencedor: {{ velhaVencedor() }} }
-            </h2>
-            <button type="button" class="acao" (click)="reiniciarVelha()">Jogar de novo</button>
+
+        <div class="velha-placar">
+          <div class="placar-card" [class.ativo]="velhaVez() === 'X' && !velhaVencedor()">
+            <span class="placar-simbolo x">X</span>
+            <span class="placar-nome">{{ velhaModo() === 'cpu' ? 'Você' : 'Jogador 1' }}</span>
+            <strong class="placar-num">{{ velhaPlacar().X }}</strong>
           </div>
-        }
-        <div class="velha-grade">
-          @for (cell of velhaTabuleiro(); track $index; let i = $index) {
-            <button type="button" class="velha-cell" (click)="jogarVelha(i)" [disabled]="!!cell || !!velhaVencedor()">
-              {{ cell ?? '' }}
-            </button>
-          }
+          <div class="placar-card placar-card--empate">
+            <span class="placar-simbolo">=</span>
+            <span class="placar-nome">Empates</span>
+            <strong class="placar-num">{{ velhaPlacar().empate }}</strong>
+          </div>
+          <div class="placar-card" [class.ativo]="velhaVez() === 'O' && !velhaVencedor()">
+            <span class="placar-simbolo o">O</span>
+            <span class="placar-nome">{{ velhaModo() === 'cpu' ? 'CPU' : 'Jogador 2' }}</span>
+            <strong class="placar-num">{{ velhaPlacar().O }}</strong>
+          </div>
         </div>
+
+        <p class="velha-status" role="status">
+          @if (velhaVencedor() === 'empate') {
+            Deu velha! Ninguém venceu 🤝
+          } @else if (velhaVencedor()) {
+            <strong class="velha-status--vitoria">{{ velhaVencedor() }} venceu!</strong> 🎉
+          } @else if (velhaPensando()) {
+            CPU pensando<span class="pontos">...</span>
+          } @else {
+            Vez de <strong [class.marca-x-texto]="velhaVez() === 'X'" [class.marca-o-texto]="velhaVez() === 'O'">{{ velhaVez() }}</strong>
+          }
+        </p>
+
+        <div class="velha-tabuleiro" [class.velha-tabuleiro--fim]="!!velhaVencedor()">
+          <div class="velha-grade" role="grid" aria-label="Tabuleiro do jogo da velha">
+            @for (cell of velhaTabuleiro(); track $index; let i = $index) {
+              <button
+                type="button"
+                class="casa"
+                [class.casa--vencedora]="!!velhaLinha()?.includes(i)"
+                [attr.aria-label]="'Casa ' + (i + 1) + (cell ? ' — ' + cell : ' — vazia')"
+                (click)="jogarVelha(i)"
+                [disabled]="!!cell || !!velhaVencedor() || velhaPensando()"
+              >
+                @if (cell === 'X') {
+                  <svg class="marca marca-x" viewBox="0 0 100 100" aria-hidden="true">
+                    <line x1="24" y1="24" x2="76" y2="76" />
+                    <line x1="76" y1="24" x2="24" y2="76" />
+                  </svg>
+                } @else if (cell === 'O') {
+                  <svg class="marca marca-o" viewBox="0 0 100 100" aria-hidden="true">
+                    <circle cx="50" cy="50" r="27" />
+                  </svg>
+                }
+              </button>
+            }
+          </div>
+        </div>
+
+        <button type="button" class="acao" (click)="reiniciarVelha()">
+          {{ velhaVencedor() ? 'Jogar de novo' : 'Nova partida' }}
+        </button>
       </div>
     }
     @case ('dama') {
