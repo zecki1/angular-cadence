@@ -15,9 +15,14 @@ export class PlaygroundPage {
 
   protected readonly conectando = signal(false);
   protected readonly conexaoOk = signal<boolean | null>(null);
+  protected readonly modoDemo = this.supabase.modoDemo;
 
   /** Health-check contra o projeto Supabase compartilhado. */
   protected async verificar(): Promise<void> {
+    if (this.modoDemo()) {
+      this.conexaoOk.set(false);
+      return;
+    }
     this.conectando.set(true);
     this.conexaoOk.set(await this.supabase.verificarConexão());
     this.conectando.set(false);

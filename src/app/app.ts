@@ -1,5 +1,6 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, inject, signal, afterNextRender } from '@angular/core';
 import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
+import AOS from 'aos';
 import { SupabaseService } from './core/supabase';
 
 interface ItemNav {
@@ -27,6 +28,12 @@ export class App {
   protected readonly menuAberto = signal(false);
   protected readonly modoDemo = this.supabase.modoDemo;
   protected readonly erro = this.supabase.erro;
+
+  constructor() {
+    afterNextRender(() => {
+      AOS.init({ duration: 700, once: true, offset: 60 });
+    });
+  }
 
   protected alternarMenu(): void {
     this.menuAberto.update((v) => !v);
