@@ -2,9 +2,11 @@
   "$schema": "./node_modules/@angular/cli/lib/config/schema.json",
   "version": 1,
   "cli": {
-    "packageManager": "npm"
+    "packageManager": "npm",
+    "analytics": "b61707a0-240a-4d02-8075-af7edaec6841"
   },
   "newProjectRoot": "projects",
+  "defaultProject": "angular-cadence",
   "projects": {
     "angular-cadence": {
       "projectType": "application",
@@ -56,10 +58,10 @@
           "builder": "@angular/build:dev-server",
           "configurations": {
             "production": {
-              "buildTarget": "cadence:build:production"
+              "buildTarget": "angular-cadence:build:production"
             },
             "development": {
-              "buildTarget": "cadence:build:development"
+              "buildTarget": "angular-cadence:build:development"
             }
           },
           "defaultConfiguration": "development"
