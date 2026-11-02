@@ -65,31 +65,59 @@
         }
       </div>
     }
-    @case ('simon') {
-      <div class="simon">
-        @if (simonEstado() === 'idle') {
-          <button type="button" class="acao" (click)="iniciarSimon()">Iniciar</button>
-        } @else if (simonEstado() === 'fim') {
-          <div class="simon-fim">
-            <h2>Fim de jogo</h2>
-            <p>Nível alcançado: {{ simonNivel() }}</p>
-            <button type="button" class="acao" (click)="iniciarSimon()">Jogar de novo</button>
-          </div>
-        } @else {
-          <p class="simon-info">Nível {{ simonNivel() }} — {{ simonEstado() === 'mostrando' ? 'Observe...' : 'Sua vez!' }}</p>
-          <div class="simon-grade">
-            @for (cor of simonCores; track $index; let i = $index) {
-              <button
-                type="button"
-                class="simon-btn"
-                [style.background]="cor"
-                [class.ativo]="simonAtivo() === i"
-                (click)="jogarSimon(i)"
-                [disabled]="simonEstado() !== 'jogando'"
-              ></button>
-            }
+    @case ('velha') {
+      <div class="velha">
+        <div class="velha-info">
+          <span>Vez: {{ velhaVez() }}</span>
+          <span>Placar X: {{ velhaPlacar().X }} · O: {{ velhaPlacar().O }} · E: {{ velhaPlacar().empate }}</span>
+        </div>
+        @if (velhaVencedor()) {
+          <div class="velha-fim" role="status">
+            <h2>
+              @if (velhaVencedor() === 'empate') { Empate! }
+              @else { Vencedor: {{ velhaVencedor() }} }
+            </h2>
+            <button type="button" class="acao" (click)="reiniciarVelha()">Jogar de novo</button>
           </div>
         }
+        <div class="velha-grade">
+          @for (cell of velhaTabuleiro(); track $index; let i = $index) {
+            <button type="button" class="velha-cell" (click)="jogarVelha(i)" [disabled]="!!cell || !!velhaVencedor()">
+              {{ cell ?? '' }}
+            </button>
+          }
+        </div>
+      </div>
+    }
+    @case ('dama') {
+      <div class="dama">
+        <div class="dama-info">
+          <span>Vez: {{ damaVez() }}</span>
+          <span>Capturas — Brancas: {{ damaCapturas().preto }} · Pretas: {{ damaCapturas().branco }}</span>
+          @if (damaVencedor()) { <span class="dama-vencedor">Vencedor: {{ damaVencedor() }}</span> }
+        </div>
+        <div class="dama-tabuleiro">
+          @for (row of damaTabuleiro(); track $index; let r = $index) {
+            <div class="dama-linha">
+              @for (cell of row; track $index; let c = $index) {
+                <button
+                  type="button"
+                  class="dama-casa"
+                  [class.escura]="(r + c) % 2 === 1"
+                  [class.selecionada]="damaSelecionada()?.r === r && damaSelecionada()?.c === c"
+                  (click)="selecionarDama(r, c)"
+                >
+                  @if (cell) {
+                    <span class="dama-peca" [class.dama]="cell.dama" [class.branca]="cell.cor === 'branco'" [class.preta]="cell.cor === 'preto'">
+                      {{ cell.dama ? '♔' : '●' }}
+                    </span>
+                  }
+                </button>
+              }
+            </div>
+          }
+        </div>
+        <button type="button" class="acao" (click)="reiniciarDama()">Reiniciar</button>
       </div>
     }
     @case ('pegar') {

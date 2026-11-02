@@ -9,6 +9,11 @@ interface CartaMemoria {
   combinada: boolean;
 }
 
+interface PecaDama {
+  cor: 'branco' | 'preto';
+  dama: boolean;
+}
+
 @Component({
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [RouterLink],
@@ -42,13 +47,18 @@ export class JogoPage {
   readonly reacaoInicio = signal(0);
   private timerReacao: ReturnType<typeof setTimeout> | null = null;
 
-  // ---- Simon ----
-  readonly simonSequencia = signal<number[]>([]);
-  readonly simonJogador = signal<number[]>([]);
-  readonly simonNivel = signal(0);
-  readonly simonEstado = signal<'idle' | 'mostrando' | 'jogando' | 'fim'>('idle');
-  readonly simonCores = ['#ef4444', '#22c55e', '#3b82f6', '#f59e0b'];
-  private simonTimer: ReturnType<typeof setTimeout> | null = null;
+  // ---- Jogo da Velha ----
+  readonly velhaTabuleiro = signal<(null | 'X' | 'O')[]>(Array(9).fill(null));
+  readonly velhaVez = signal<'X' | 'O'>('X');
+  readonly velhaVencedor = signal<null | 'X' | 'O' | 'empate'>(null);
+  readonly velhaPlacar = signal<{ X: number; O: number; empate: number }>({ X: 0, O: 0, empate: 0 });
+
+  // ---- Dama ----
+  readonly damaTabuleiro = signal<(PecaDama | null)[][]>(this.montarDama());
+  readonly damaVez = signal<'branco' | 'preto'>('branco');
+  readonly damaSelecionada = signal<{ r: number; c: number } | null>(null);
+  readonly damaVencedor = signal<null | 'branco' | 'preto'>(null);
+  readonly damaCapturas = signal<{ branco: number; preto: number }>({ branco: 0, preto: 0 });
 
   // ---- Pegar objetos ----
   readonly pegarPontos = signal(0);
@@ -66,7 +76,7 @@ export class JogoPage {
     this.route.paramMap.subscribe((p) => {
       const novo = p.get('id') ?? 'memoria';
       this.id.set(novo);
-      this.reiniciar(novo);
+      this.reiniciar();
     });
   }
 
@@ -81,7 +91,6 @@ export class JogoPage {
       { id: i * 2, emoji: e, virada: false, combinada: false },
       { id: i * 2 + 1, emoji: e, virada: false, combinada: false },
     ]);
-    // shuffle
     for (let i = pares.length - 1; i > 0; i--) {
       const j = Math.floor(Math.random() * (i + 1));
       [pares[i], pares[j]] = [pares[j], pares[i]];
@@ -187,52 +196,149 @@ export class JogoPage {
     return Math.round(t.reduce((a, b) => a + b, 0) / t.length);
   }
 
-  // ---------- Simon ----------
-  iniciarSimon(): void {
-    this.simonSequencia.set([]);
-    this.simonJogador.set([]);
-    this.simonNivel.set(0);
-    this.simonEstado.set('idle');
-    setTimeout(() => this.proximoNivelSimon(), 600);
+  // ---------- Jogo da Velha ----------
+  jogarVelha(i: number): void {
+    if (this.velhaTabuleiro()[i] || this.velhaVencedor()) return;
+    const t = [...this.velhaTabuleiro()];
+    t[i] = this.velhaVez();
+    this.velhaTabuleiro.set(t);
+    const v = this.calcularVencedorVelha(t);
+    if (v) {
+      this.velhaVencedor.set(v);
+      const pl = { ...this.velhaPlacar() };
+      if (v === 'empate') pl.empate++;
+      else pl[v]++;
+      this.velhaPlacar.set(pl);
+      if (v !== 'empate') this.scores.salvar('velha', 100);
+    } else {
+      this.velhaVez.set(this.velhaVez() === 'X' ? 'O' : 'X');
+    }
   }
 
-  proximoNivelSimon(): void {
-    const seq = [...this.simonSequencia(), Math.floor(Math.random() * 4)];
-    this.simonSequencia.set(seq);
-    this.simonJogador.set([]);
-    this.simonNivel.set(seq.length);
-    this.simonEstado.set('mostrando');
-    this.mostrarSequenciaSimon(0);
+  calcularVencedorVelha(t: (null | 'X' | 'O')[]): null | 'X' | 'O' | 'empate' {
+    const linhas = [
+      [0, 1, 2], [3, 4, 5], [6, 7, 8],
+      [0, 3, 6], [1, 4, 7], [2, 5, 8],
+      [0, 4, 8], [2, 4, 6],
+    ];
+    for (const [a, b, c] of linhas) {
+      if (t[a] && t[a] === t[b] && t[a] === t[c]) return t[a];
+    }
+    if (t.every((x) => x)) return 'empate';
+    return null;
   }
 
-  mostrarSequenciaSimon(i: number): void {
-    if (i >= this.simonSequencia().length) {
-      this.simonEstado.set('jogando');
+  reiniciarVelha(): void {
+    this.velhaTabuleiro.set(Array(9).fill(null));
+    this.velhaVez.set('X');
+    this.velhaVencedor.set(null);
+  }
+
+  // ---------- Dama ----------
+  montarDama(): (PecaDama | null)[][] {
+    const board: (PecaDama | null)[][] = Array.from({ length: 8 }, () => Array(8).fill(null));
+    for (let r = 0; r < 3; r++) {
+      for (let c = 0; c < 8; c++) {
+        if ((r + c) % 2 === 1) board[r][c] = { cor: 'preto', dama: false };
+      }
+    }
+    for (let r = 5; r < 8; r++) {
+      for (let c = 0; c < 8; c++) {
+        if ((r + c) % 2 === 1) board[r][c] = { cor: 'branco', dama: false };
+      }
+    }
+    return board;
+  }
+
+  selecionarDama(r: number, c: number): void {
+    if (this.damaVencedor()) return;
+    const peca = this.damaTabuleiro()[r][c];
+    const sel = this.damaSelecionada();
+    if (sel) {
+      if (this.tentarMoverDama(sel.r, sel.c, r, c)) {
+        this.damaSelecionada.set(null);
+        return;
+      }
+      if (peca && peca.cor === this.damaVez()) {
+        this.damaSelecionada.set({ r, c });
+      } else {
+        this.damaSelecionada.set(null);
+      }
       return;
     }
-    const cor = this.simonSequencia()[i];
-    this.simonAtivo.set(cor);
-    this.simonTimer = setTimeout(() => {
-      this.simonAtivo.set(-1);
-      this.simonTimer = setTimeout(() => this.mostrarSequenciaSimon(i + 1), 350);
-    }, 600);
+    if (peca && peca.cor === this.damaVez()) {
+      this.damaSelecionada.set({ r, c });
+    }
   }
 
-  readonly simonAtivo = signal(-1);
+  tentarMoverDama(fr: number, fc: number, tr: number, tc: number): boolean {
+    const board = this.damaTabuleiro().map((row) => [...row]);
+    const peca = board[fr][fc];
+    if (!peca) return false;
+    const dr = tr - fr;
+    const dc = tc - fc;
+    const dir = peca.cor === 'branco' ? -1 : 1;
+    // movimento simples
+    if (Math.abs(dr) === 1 && Math.abs(dc) === 1 && (peca.dama || dr === dir)) {
+      if (board[tr][tc] === null) {
+        board[tr][tc] = peca;
+        board[fr][fc] = null;
+        this.promoverDama(board, tr, tc);
+        this.damaTabuleiro.set(board);
+        this.trocarVezDama();
+        return true;
+      }
+    }
+    // captura
+    if (Math.abs(dr) === 2 && Math.abs(dc) === 2 && (peca.dama || dr === dir * 2)) {
+      const mr = (fr + tr) / 2;
+      const mc = (fc + tc) / 2;
+      const meio = board[mr][mc];
+      if (meio && meio.cor !== peca.cor && board[tr][tc] === null) {
+        board[tr][tc] = peca;
+        board[fr][fc] = null;
+        board[mr][mc] = null;
+        this.promoverDama(board, tr, tc);
+        this.damaTabuleiro.set(board);
+        const cap = { ...this.damaCapturas() };
+        if (peca.cor === 'branco') cap.preto++;
+        else cap.branco++;
+        this.damaCapturas.set(cap);
+        this.trocarVezDama();
+        return true;
+      }
+    }
+    return false;
+  }
 
-  jogarSimon(cor: number): void {
-    if (this.simonEstado() !== 'jogando') return;
-    const jog = [...this.simonJogador(), cor];
-    this.simonJogador.set(jog);
-    const seq = this.simonSequencia();
-    if (jog[jog.length - 1] !== seq[jog.length - 1]) {
-      this.simonEstado.set('fim');
-      this.scores.salvar('simon', this.simonNivel() * 10);
-      return;
+  promoverDama(board: (PecaDama | null)[][], r: number, c: number): void {
+    const p = board[r][c];
+    if (!p) return;
+    if (p.cor === 'branco' && r === 0) p.dama = true;
+    if (p.cor === 'preto' && r === 7) p.dama = true;
+  }
+
+  trocarVezDama(): void {
+    this.damaVez.set(this.damaVez() === 'branco' ? 'preto' : 'branco');
+    this.verificarVencedorDama();
+  }
+
+  verificarVencedorDama(): void {
+    let b = 0, p = 0;
+    for (const row of this.damaTabuleiro()) for (const cell of row) {
+      if (cell?.cor === 'branco') b++;
+      if (cell?.cor === 'preto') p++;
     }
-    if (jog.length === seq.length) {
-      setTimeout(() => this.proximoNivelSimon(), 700);
-    }
+    if (b === 0) this.damaVencedor.set('preto');
+    else if (p === 0) this.damaVencedor.set('branco');
+  }
+
+  reiniciarDama(): void {
+    this.damaTabuleiro.set(this.montarDama());
+    this.damaVez.set('branco');
+    this.damaSelecionada.set(null);
+    this.damaVencedor.set(null);
+    this.damaCapturas.set({ branco: 0, preto: 0 });
   }
 
   // ---------- Pegar objetos ----------
@@ -283,18 +389,14 @@ export class JogoPage {
     this.scores.salvar('pegar', this.pegarPontos());
   }
 
-  reiniciar(id: string): void {
+  reiniciar(): void {
     this.limparTimers();
-    // reset all
     this.reiniciarMemoria();
     this.reacaoEstado.set('espera');
     this.reacaoTempos.set([]);
     this.reacaoRodada.set(0);
-    this.simonSequencia.set([]);
-    this.simonJogador.set([]);
-    this.simonNivel.set(0);
-    this.simonEstado.set('idle');
-    this.simonAtivo.set(-1);
+    this.reiniciarVelha();
+    this.reiniciarDama();
     this.pegarPontos.set(0);
     this.pegarVidas.set(3);
     this.pegarTempo.set(30);
@@ -305,7 +407,6 @@ export class JogoPage {
   private limparTimers(): void {
     if (this.timerMemoria) { clearInterval(this.timerMemoria); this.timerMemoria = null; }
     if (this.timerReacao) { clearTimeout(this.timerReacao); this.timerReacao = null; }
-    if (this.simonTimer) { clearTimeout(this.simonTimer); this.simonTimer = null; }
     if (this.pegarInterval) { clearInterval(this.pegarInterval); this.pegarInterval = null; }
     if (this.pegarSpawn) { clearInterval(this.pegarSpawn); this.pegarSpawn = null; }
     if (this.pegarTick) { clearInterval(this.pegarTick); this.pegarTick = null; }
@@ -315,7 +416,8 @@ export class JogoPage {
     const map: Record<string, string> = {
       memoria: 'Memória',
       reacao: 'Reação',
-      simon: 'Simon Says',
+      velha: 'Jogo da Velha',
+      dama: 'Dama',
       pegar: 'Pegar Objetos',
     };
     return map[this.id()] ?? this.id();

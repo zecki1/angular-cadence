@@ -48,7 +48,7 @@ export class ScoreService {
         if (jogo) q = q.eq('jogo', jogo);
         const { data, error } = await q;
         if (error || !data) return this.rankingLocal(jogo, limite);
-        return data.map((r: any) => ({
+        return data.map((r: { jogador: string; jogo: string; pontos: number; created_at: string }) => ({
           jogador: r.jogador,
           jogo: r.jogo,
           pontos: r.pontos,
