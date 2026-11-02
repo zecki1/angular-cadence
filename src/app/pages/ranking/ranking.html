@@ -1,0 +1,23 @@
+<section class="ranking-pagina">
+  <header class="ranking-cabecalho">
+    <a routerLink="/" class="voltar">&larr; Jogos</a>
+    <h1>Ranking</h1>
+  </header>
+
+  @if (carregando()) {
+    <p class="carregando">Carregando...</p>
+  } @else if (lista().length === 0) {
+    <p class="vazio">Nenhuma pontuação ainda. Jogue para aparecer aqui!</p>
+  } @else {
+    <ol class="ranking-lista">
+      @for (p of lista(); track $index; let i = $index) {
+        <li class="ranking-item">
+          <span class="ranking-pos">{{ i + 1 }}</span>
+          <span class="ranking-nome">{{ p.jogador }}</span>
+          <span class="ranking-jogo">{{ p.jogo }}</span>
+          <span class="ranking-pontos">{{ p.pontos }}</span>
+        </li>
+      }
+    </ol>
+  }
+</section>

@@ -1,9 +1,11 @@
 import { Routes } from '@angular/router';
-import { PlaygroundPage } from './pages/playground/playground';
-import { ComponentesPage } from './pages/componentes/componentes';
+import { HomePage } from './pages/home/home';
+import { JogoPage } from './pages/jogo/jogo';
+import { RankingPage } from './pages/ranking/ranking';
+
 export const routes: Routes = [
-  { path: '', pathMatch: 'full', redirectTo: 'playground' },
-  { path: 'playground', component: PlaygroundPage, title: 'Playground — Cadence' },
-  { path: 'componentes', component: ComponentesPage, title: 'Componentes — Cadence' },
-  { path: '**', redirectTo: 'playground' },
+  { path: '', component: HomePage, title: 'Cadence — Minigames' },
+  { path: 'jogo/:id', component: JogoPage, title: 'Jogo — Cadence' },
+  { path: 'ranking', component: RankingPage, title: 'Ranking — Cadence' },
+  { path: '**', redirectTo: '' },
 ];

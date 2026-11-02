@@ -15,8 +15,8 @@ describe('App', () => {
     expect(fixture.componentInstance).toBeTruthy();
   });
 
-  it('deve navegar para playground', () => {
+  it('deve navegar para home', () => {
     const fixture = TestBed.createComponent(App);
-    expect(fixture.componentInstance.nav[0].path).toBe('/playground');
+    expect(fixture.componentInstance.nav[0].path).toBe('/');
   });
 });

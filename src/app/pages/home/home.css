@@ -1,0 +1,103 @@
+.hub {
+  display: flex;
+  flex-direction: column;
+  gap: 2.5rem;
+  max-width: 72rem;
+  margin: 0 auto;
+  padding: clamp(2rem, 5vw, 4rem) clamp(1rem, 4vw, 2.5rem);
+}
+
+.hub-hero {
+  text-align: center;
+}
+
+.hub-hero h1 {
+  margin: 0;
+  font-size: clamp(2.5rem, 8vw, 5rem);
+  letter-spacing: -0.04em;
+  background: linear-gradient(120deg, #fff 0%, var(--acento) 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.hub-tagline {
+  margin: 0.5rem 0 0;
+  color: var(--tenue);
+  font-size: 1.1rem;
+}
+
+.hub-grid {
+  display: grid;
+  gap: 1.25rem;
+  grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr));
+}
+
+.jogo-card {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  padding: 1.5rem;
+  background: var(--superficie);
+  border: 1px solid var(--borda);
+  border-radius: 1rem;
+  text-decoration: none;
+  color: var(--texto);
+  transition: transform 0.35s cubic-bezier(0.2, 0.7, 0.2, 1), border-color 0.35s ease, box-shadow 0.35s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.jogo-card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(80% 60% at 50% 0%, color-mix(in srgb, var(--cor, var(--acento)) 22%, transparent), transparent 70%);
+  opacity: 0;
+  transition: opacity 0.35s ease;
+  pointer-events: none;
+}
+
+.jogo-card:hover {
+  transform: translateY(-8px) scale(1.02);
+  border-color: var(--cor, var(--acento));
+  box-shadow: 0 20px 45px rgba(0, 0, 0, 0.4);
+}
+
+.jogo-card:hover::before {
+  opacity: 1;
+}
+
+.jogo-icone {
+  font-size: 2.5rem;
+}
+
+.jogo-nome {
+  margin: 0;
+  font-size: 1.25rem;
+  letter-spacing: -0.01em;
+}
+
+.jogo-desc {
+  margin: 0;
+  color: var(--tenue);
+  font-size: 0.9rem;
+  line-height: 1.5;
+  flex: 1;
+}
+
+.jogo-cta {
+  color: var(--cor, var(--acento));
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+.hub-ranking {
+  text-align: center;
+}
+
+.ranking-link {
+  color: var(--acento);
+  text-decoration: none;
+  font-weight: 600;
+}

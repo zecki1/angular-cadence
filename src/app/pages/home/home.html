@@ -1,0 +1,21 @@
+<section class="hub">
+  <header class="hub-hero" data-aos="fade-up">
+    <h1>Cadence</h1>
+    <p class="hub-tagline">Minigames de objetos — teste reflexo, memória e atenção.</p>
+  </header>
+
+  <div class="hub-grid">
+    @for (jogo of jogos; track jogo.id) {
+      <a class="jogo-card" [routerLink]="['/jogo', jogo.id]" [style.--cor]="jogo.cor" data-aos="fade-up">
+        <span class="jogo-icone" aria-hidden="true">{{ jogo.icone }}</span>
+        <h2 class="jogo-nome">{{ jogo.nome }}</h2>
+        <p class="jogo-desc">{{ jogo.descricao }}</p>
+        <span class="jogo-cta">Jogar &rarr;</span>
+      </a>
+    }
+  </div>
+
+  <div class="hub-ranking" data-aos="fade-up">
+    <a routerLink="/ranking" class="ranking-link">Ver ranking &rarr;</a>
+  </div>
+</section>

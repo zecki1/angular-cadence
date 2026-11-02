@@ -1,0 +1,129 @@
+<section class="jogo-pagina">
+  <header class="jogo-cabecalho">
+    <a routerLink="/" class="voltar">&larr; Jogos</a>
+    <h1>{{ nomeJogo() }}</h1>
+  </header>
+
+  @switch (id()) {
+    @case ('memoria') {
+      <div class="memoria">
+        <div class="memoria-info">
+          <span>Movimentos: {{ movimentos() }}</span>
+          <span>Pares: {{ paresFeitos() }}/{{ emojis.length }}</span>
+          <span>Tempo: {{ tempoMemoria() }}s</span>
+        </div>
+        @if (memoriaFim()) {
+          <div class="memoria-fim" role="status">
+            <h2>Parabéns! 🎉</h2>
+            <p>Você completou em {{ movimentos() }} movimentos e {{ tempoMemoria() }}s.</p>
+            <button type="button" class="acao" (click)="reiniciarMemoria()">Jogar de novo</button>
+          </div>
+        }
+        <div class="memoria-grade">
+          @for (carta of cartas(); track carta.id) {
+            <button
+              type="button"
+              class="carta"
+              [class.virada]="carta.virada || carta.combinada"
+              [class.combinada]="carta.combinada"
+              (click)="virarCarta(carta)"
+              [disabled]="carta.combinada"
+            >
+              @if (carta.virada || carta.combinada) {
+                <span class="carta-emoji">{{ carta.emoji }}</span>
+              } @else {
+                <span class="carta-verso">?</span>
+              }
+            </button>
+          }
+        </div>
+      </div>
+    }
+    @case ('reacao') {
+      <div class="reacao">
+        @if (reacaoEstado() === 'espera') {
+          <button type="button" class="reacao-botao reacao-botao--inicio" (click)="iniciarReacao()">Iniciar (5 rodadas)</button>
+        } @else if (reacaoEstado() === 'fim') {
+          <div class="reacao-fim">
+            <h2>Média: {{ mediaReacao() }} ms</h2>
+            <p>Tempos: {{ reacaoTempos().join(' ms, ') }} ms</p>
+            <button type="button" class="acao" (click)="iniciarReacao()">Jogar de novo</button>
+          </div>
+        } @else {
+          <button
+            type="button"
+            class="reacao-botao"
+            [class.verde]="reacaoEstado() === 'verde'"
+            [class.cedo]="reacaoEstado() === 'cedo'"
+            (click)="clicarReacao()"
+          >
+            @if (reacaoEstado() === 'pronto') { Aguarde... }
+            @else if (reacaoEstado() === 'verde') { CLIQUE! }
+            @else if (reacaoEstado() === 'cedo') { Cedo demais! }
+          </button>
+          <p class="reacao-info">Rodada {{ reacaoRodada() }}/5</p>
+        }
+      </div>
+    }
+    @case ('simon') {
+      <div class="simon">
+        @if (simonEstado() === 'idle') {
+          <button type="button" class="acao" (click)="iniciarSimon()">Iniciar</button>
+        } @else if (simonEstado() === 'fim') {
+          <div class="simon-fim">
+            <h2>Fim de jogo</h2>
+            <p>Nível alcançado: {{ simonNivel() }}</p>
+            <button type="button" class="acao" (click)="iniciarSimon()">Jogar de novo</button>
+          </div>
+        } @else {
+          <p class="simon-info">Nível {{ simonNivel() }} — {{ simonEstado() === 'mostrando' ? 'Observe...' : 'Sua vez!' }}</p>
+          <div class="simon-grade">
+            @for (cor of simonCores; track $index; let i = $index) {
+              <button
+                type="button"
+                class="simon-btn"
+                [style.background]="cor"
+                [class.ativo]="simonAtivo() === i"
+                (click)="jogarSimon(i)"
+                [disabled]="simonEstado() !== 'jogando'"
+              ></button>
+            }
+          </div>
+        }
+      </div>
+    }
+    @case ('pegar') {
+      <div class="pegar">
+        <div class="pegar-info">
+          <span>Pontos: {{ pegarPontos() }}</span>
+          <span>Vidas: {{ pegarVidas() }}</span>
+          <span>Tempo: {{ pegarTempo() }}s</span>
+        </div>
+        @if (!pegarAtivo() && pegarPontos() === 0 && pegarTempo() === 30) {
+          <button type="button" class="acao" (click)="iniciarPegar()">Iniciar (30s)</button>
+        } @else if (!pegarAtivo()) {
+          <div class="pegar-fim">
+            <h2>Fim!</h2>
+            <p>Pontuação: {{ pegarPontos() }}</p>
+            <button type="button" class="acao" (click)="iniciarPegar()">Jogar de novo</button>
+          </div>
+        } @else {
+          <div class="pegar-area">
+            @for (obj of pegarObjetos(); track obj.id) {
+              <button
+                type="button"
+                class="pegar-obj"
+                [style.left.%]="obj.x"
+                [style.top.%]="obj.y"
+                (click)="clicarObjeto(obj.id)"
+              >{{ obj.emoji }}</button>
+            }
+          </div>
+        }
+      </div>
+    }
+    @default {
+      <p>Jogo não encontrado. <a routerLink="/">Voltar</a></p>
+    }
+  }
+</section>

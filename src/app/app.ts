@@ -21,8 +21,8 @@ export class App {
   protected readonly tagline = 'Design system acessível — tokens, componentes e playground';
   protected readonly semana = 6;
   readonly nav: ItemNav[] = [
-    { path: '/playground', rotulo: 'Playground' },
-    { path: '/componentes', rotulo: 'Componentes' },
+    { path: '/', rotulo: 'Jogos' },
+    { path: '/ranking', rotulo: 'Ranking' },
   ];
 
   protected readonly menuAberto = signal(false);
